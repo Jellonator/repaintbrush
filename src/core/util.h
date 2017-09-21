@@ -4,6 +4,7 @@
 #include <giomm/file.h>
 
 namespace core {
+    const std::string version = "1.0";
     const std::string rbrush_folder_name = ".rbrush";
     const std::string rbrush_version_name = "VERSION";
     const std::string rbrush_db_name = "data.db";
