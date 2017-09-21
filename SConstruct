@@ -14,6 +14,10 @@ program_source = [
     "src/core/db/statement.cpp",
     "src/cli/arg.cpp",
     "src/cli/base.cpp",
+    "src/cli/cmd/help.cpp",
+    "src/cli/cmd/import.cpp",
+    "src/cli/cmd/init.cpp",
+    "src/cli/cmd/input.cpp",
     # "src/gui/base.cpp",
 ]
 program = env.Program(target='build/repaintbrush', source=program_source)
