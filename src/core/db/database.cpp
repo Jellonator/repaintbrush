@@ -19,4 +19,9 @@ namespace database {
     {
         return Statement(this->m_database.get(), statement);
     }
+
+    sqlite3* Database::get_ptr()
+    {
+        return this->m_database.get();
+    }
 }

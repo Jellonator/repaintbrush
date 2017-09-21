@@ -2,7 +2,7 @@
 #include <iostream>
 
 namespace cli {
-    const std::string command_help_string =
+    const char* command_help_string =
 R"(Usage: repaintbrush help <command>
 
 Print help text about the given command.)";

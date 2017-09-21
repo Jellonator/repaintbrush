@@ -125,7 +125,7 @@ namespace cli {
 
     void ArgBlock::assert_all_args() const
     {
-        if (this->m_nargs != this->size()) {
+        if (this->m_nargs != int(this->size())) {
             std::stringstream s;
             s << "Error: ";
             s << "Expected " << this->m_nargs << " arguments.";
@@ -135,7 +135,7 @@ namespace cli {
 
     void ArgBlock::assert_num_args(int n) const
     {
-        if (n != this->size()) {
+        if (n != int(this->size())) {
             std::stringstream s;
             s << "Error: ";
             s << "Expected " << n << " arguments.";
@@ -162,7 +162,7 @@ namespace cli {
 
     bool ArgBlock::match_arg(int n, const std::string& value) const
     {
-        if (n >= 0 && n < this->size()) {
+        if (n >= 0 && n < int(this->size())) {
             return this->m_args[n] == value;
         }
         return false;

@@ -3,6 +3,6 @@
 #include "../arg.h"
 
 namespace cli {
-    extern const std::string command_init_string;
+    extern const char* command_init_string;
     void command_init_func(ArgChain& args);
 }

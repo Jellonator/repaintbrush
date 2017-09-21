@@ -7,7 +7,7 @@
 namespace cli {
     struct Command {
         std::function<void(ArgChain&)> m_func;
-        std::string m_help;
+        const char* m_help;
     };
 
     extern const std::map<std::string, Command> command_definitions;

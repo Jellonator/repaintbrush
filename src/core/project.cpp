@@ -1,6 +1,7 @@
 #include "project.h"
 #include <iostream>
-
+#include <sstream>
+#include <stdexcept>
 
 namespace core {
     void do_simple_statement(sqlite3* db, const std::string& stmt_str)
@@ -42,19 +43,19 @@ namespace core {
         Project project(path, force, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
         {
             auto stmt = project.get_database().prepare(
-                "CREATE TABLE IF NOT EXISTS images("\
-                    "id INT PRIMARY KEY NOT NULL,"\
-                    "name NTEXT NOT NULL,"\
-                    "alias NTEXT"\
-                ")"
+                R"(CREATE TABLE IF NOT EXISTS images(
+                    id INT PRIMARY KEY NOT NULL,
+                    name NTEXT NOT NULL,
+                    alias NTEXT
+                ))"
             );
             stmt.finish();
         }
         {
             auto stmt = project.get_database().prepare(
-                "CREATE TABLE IF NOT EXISTS inputfolders("\
-                    "name TEXT NOT NULL"\
-                ")"
+                R"(CREATE TABLE IF NOT EXISTS inputfolders(
+                    name TEXT NOT NULL UNIQUE
+                ))"
             );
             stmt.finish();
         }
@@ -64,5 +65,46 @@ namespace core {
     database::Database& Project::get_database()
     {
         return this->m_database;
+    }
+
+    bool Project::add_inputfolder(Glib::RefPtr<Gio::File>& path)
+    {
+        if (path->query_file_type() != Gio::FileType::FILE_TYPE_DIRECTORY) {
+            std::stringstream s;
+            s << "Error: '" << path->get_path()
+                << "' is not a valid directory!";
+            throw std::runtime_error(s.str());
+        }
+        auto& db = this->get_database();
+        auto stmt = db.prepare(
+            R"(INSERT INTO inputfolders(name)
+            VALUES (?))"
+        );
+        stmt.bind(1, path->get_path());
+        try {
+            stmt.finish();
+        } catch (std::exception& e) {
+            if (std::string(e.what()) ==
+                    "UNIQUE constraint failed: inputfolders.name") {
+                return true;
+            } else {
+                throw e;
+            }
+        }
+        return false;
+    }
+
+    bool Project::remove_inputfolder(Glib::RefPtr<Gio::File>& path)
+    {
+        auto& db = this->get_database();
+        auto stmt = db.prepare(
+            R"(DELETE FROM inputfolders
+            WHERE name = ?)"
+        );
+        stmt.bind(1, path->get_path());
+        stmt.finish();
+        // std::cout << sqlite3_changes(db.get_ptr())
+        // << " rows were deleted." << std::endl;
+        return sqlite3_changes(db.get_ptr()) == 0;
     }
 }

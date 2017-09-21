@@ -53,13 +53,18 @@ namespace database {
         return this->bind_null(ikey);
     }
 
+    sqlite3_stmt* Statement::stmt_ptr()
+    {
+        return this->m_statement.get();
+    }
+
     template<>
     bool Statement::bind<int32_t>(int key, const int32_t& value)
     {
         int ok = sqlite3_bind_int(this->m_statement.get(), key, value);
         return ok == SQLITE_OK;
     }
-    
+
     template<>
     bool Statement::bind<int64_t>(int key, const int64_t& value)
     {
