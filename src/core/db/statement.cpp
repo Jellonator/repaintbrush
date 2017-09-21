@@ -58,6 +58,57 @@ namespace database {
         return this->m_statement.get();
     }
 
+    // Value templates
+    template<>
+    int32_t Statement::column_value(int key)
+    {
+        // For consistency's sake, we decrement key here so that key is
+        // 1-indexed, similar to Statement::bind. I could instead increment the
+        // key in Statement::bind so that everything would be 0-indexed, but
+        // that would end up being more confusing because SQL statements can
+        // also use the ?NNN format, which would break things a little.
+        key --;
+        return sqlite3_column_int(this->stmt_ptr(), key);
+    }
+
+    template<>
+    int64_t Statement::column_value(int key)
+    {
+        // For consistency's sake, we decrement key here so that key is
+        // 1-indexed, similar to Statement::bind. I could instead increment the
+        // key in Statement::bind so that everything would be 0-indexed, but
+        // that would end up being more confusing because SQL statements can
+        // also use the ?NNN format, which would break things a little.
+        key --;
+        return sqlite3_column_int64(this->stmt_ptr(), key);
+    }
+
+    template<>
+    double Statement::column_value(int key)
+    {
+        // For consistency's sake, we decrement key here so that key is
+        // 1-indexed, similar to Statement::bind. I could instead increment the
+        // key in Statement::bind so that everything would be 0-indexed, but
+        // that would end up being more confusing because SQL statements can
+        // also use the ?NNN format, which would break things a little.
+        key --;
+        return sqlite3_column_double(this->stmt_ptr(), key);
+    }
+
+    template<>
+    std::string Statement::column_value(int key)
+    {
+        // For consistency's sake, we decrement key here so that key is
+        // 1-indexed, similar to Statement::bind. I could instead increment the
+        // key in Statement::bind so that everything would be 0-indexed, but
+        // that would end up being more confusing because SQL statements can
+        // also use the ?NNN format, which would break things a little.
+        key --;
+        const unsigned char* c = sqlite3_column_text(this->stmt_ptr(), key);
+        return std::string(reinterpret_cast<const char*>(c));
+    }
+
+    // Bind templates
     template<>
     bool Statement::bind<int32_t>(int key, const int32_t& value)
     {

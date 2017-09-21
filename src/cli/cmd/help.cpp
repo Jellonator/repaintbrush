@@ -15,7 +15,7 @@ Print help text about the given command.)";
             auto& cmdname = block[0];
             if (command_definitions.count(cmdname) != 0) {
                 auto& def = command_definitions.at(cmdname);
-                std::cout << def.m_help << '\n' << std::endl;
+                std::cout << def.m_help << std::endl;
             } else {
                 std::cout << "No such command '" << cmdname << "'" << std::endl;
             }

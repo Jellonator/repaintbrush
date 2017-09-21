@@ -39,5 +39,8 @@ namespace core {
         /// Remove a folder from input folders
         /// Returns true if the folder does not exist.
         bool remove_inputfolder(Glib::RefPtr<Gio::File>& path);
+
+        /// Get a list of input folders.
+        std::vector<std::string> list_input_folders();
     };
 }

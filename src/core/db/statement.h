@@ -1,6 +1,7 @@
 #pragma once
 #include <sqlite3.h>
 #include <string>
+#include <sstream>
 #include <memory>
 
 namespace database {
@@ -25,6 +26,34 @@ namespace database {
 
         /// Reset this statement so it can be ran again.
         void reset();
+
+        /// Get the type of a column corresponding to key.
+        /// Note that keys are 1-indexed;
+        int column_type(int key);
+
+        /// Get the type of a column corresponding to key.
+        /// The key should match a table parameter.
+        int column_type(const std::string& key);
+
+        /// Get the type of a column corresponding to key.
+        /// Note that keys are 1-indexed;
+        template<class V>
+        V column_value(int key);
+
+        /// Get the type of a column corresponding to key.
+        /// The key should match a table parameter.
+        template<typename V>
+        V column_value(const std::string& key)
+        {
+            for (int i = 0; i < sqlite3_column_count(this->stmt_ptr()); i ++){
+                if (key == sqlite3_column_name(this->stmt_ptr(), i)) {
+                    return this->column_value<V>(i+1);
+                }
+            }
+            std::stringstream s;
+            s << "No such key '" << key << "'" << "exists in row.";
+            throw std::runtime_error(s.str());
+        }
 
         /// Bind a null value to the given key.
         /// Note that keys are 1-indexed.
@@ -58,6 +87,16 @@ namespace database {
         /// Return a pointer to this statement's underlying statement.
         sqlite3_stmt* stmt_ptr();
     };
+    
+    template<>
+    int32_t Statement::column_value(int key);
+    template<>
+    int64_t Statement::column_value(int key);
+    template<>
+    double Statement::column_value(int key);
+    template<>
+    std::string Statement::column_value(int key);
+
     template<>
     bool Statement::bind<int32_t>(int key, const int32_t& value);
     template<>

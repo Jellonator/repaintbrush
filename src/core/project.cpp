@@ -107,4 +107,19 @@ namespace core {
         // << " rows were deleted." << std::endl;
         return sqlite3_changes(db.get_ptr()) == 0;
     }
+
+    std::vector<std::string> Project::list_input_folders()
+    {
+        std::vector<std::string> ret;
+        auto& db = this->get_database();
+        auto stmt = db.prepare(
+            R"(SELECT name FROM inputfolders)"
+        );
+        while (!stmt.done()) {
+            if (stmt.step() == SQLITE_ROW) {
+                ret.push_back(stmt.column_value<std::string>(1));
+            }
+        }
+        return ret;
+    }
 }

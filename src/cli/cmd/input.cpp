@@ -49,6 +49,7 @@ Commands:
         auto path = core::get_project_directory(Glib::get_current_dir());
         if (!path) {
             std::cout << "Could not find repaintbrush project folder." << std::endl;
+            return;
         }
         auto force = block.has_option("force");
         core::Project project = core::Project::connect(*path, force);
@@ -70,6 +71,7 @@ Commands:
         auto path = core::get_project_directory(Glib::get_current_dir());
         if (!path) {
             std::cout << "Could not find repaintbrush project folder." << std::endl;
+            return;
         }
         auto force = block.has_option("force");
         core::Project project = core::Project::connect(*path, force);
@@ -91,9 +93,18 @@ Commands:
         auto path = core::get_project_directory(Glib::get_current_dir());
         if (!path) {
             std::cout << "Could not find repaintbrush project folder." << std::endl;
+            return;
         }
         auto force = block.has_option("force");
         core::Project project = core::Project::connect(*path, force);
+        auto list = project.list_input_folders();
+        if (list.size() == 0) {
+            std::cout << "There are no input folders." << std::endl;
+        } else {
+            for (auto& str : list) {
+                std::cout << str << std::endl;
+            }
+        }
     }
 
 }
