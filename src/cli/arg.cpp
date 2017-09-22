@@ -4,7 +4,45 @@
 #include <sstream>
 
 namespace cli {
-    bool check_full_arg(const std::string& val)
+    ArgException::ArgException(Type code, const std::string& msg)
+    : m_type(code)
+    {
+        std::stringstream s;
+        switch (code) {
+        case Type::TYPE_OPTION_UNKNOWN:
+            s << "Unknown Option: ";
+            break;
+        case Type::TYPE_OPTION_DUPLICATE:
+            s << "Duplicate Option: ";
+            break;
+        case Type::TYPE_OPTION_EXPECTED_ARG:
+            s << "Expected Argument After Option: ";
+            break;
+        case Type::TYPE_OPTION_INVALID:
+            s << "Invalid Option: ";
+            break;
+        case Type::TYPE_TOO_MANY_ARGS:
+            s << "Too many arguments, expected ";
+            break;
+        case Type::TYPE_NOT_ENOUGH_ARGS:
+            s << "Not enough arguments, expected ";
+            break;
+        }
+        s << msg;
+        this->m_msg = s.str();
+    }
+
+    ArgException::Type ArgException::type() const
+    {
+        return this->m_type;
+    }
+
+    const char* ArgException::what() const throw()
+    {
+        return this->m_msg.c_str();
+    }
+
+    bool check_full_option(const std::string& val)
     {
         if (val.size() >= 2) {
             return val[0] == '-' && val[1] == '-';
@@ -12,14 +50,11 @@ namespace cli {
         return false;
     }
 
-    char check_short_arg(const std::string& val)
+    char check_short_option(const std::string& val)
     {
         if (val.size() >= 1) {
             if (val.size() >= 3) {
-                std::stringstream s;
-                s << "Error parsing '" << val << "': ";
-                s << "Shorthand argument should only have one character.";
-                throw std::runtime_error(s.str());
+                throw ArgException(ArgException::TYPE_OPTION_UNKNOWN, val);
             }
             if (val[0] == '-') {
                 return val[1];
@@ -30,6 +65,25 @@ namespace cli {
         return 0;
     }
 
+    std::string get_full_name(const std::string& name,
+        const std::map<char, std::string>& shorthand)
+    {
+        if (check_full_option(name)) {
+            return name.substr(2);
+        } else {
+            char c = check_short_option(name);
+            if (shorthand.count(c) == 0) {
+                throw ArgException(ArgException::TYPE_OPTION_UNKNOWN, name);
+            }
+            return shorthand.at(c);
+        }
+    }
+
+    bool is_option(const std::string& name)
+    {
+        return name.size() > 0 && name[0] == '-';
+    }
+
     ArgChain::ArgChain(const std::vector<std::string>& arguments)
     : m_args() {
         for (auto& str : arguments) {
@@ -37,42 +91,13 @@ namespace cli {
         }
     }
 
-    std::string get_full_name(const std::string& name,
-        const std::map<char, std::string>& shorthand)
-    {
-        if (check_full_arg(name)) {
-            return name.substr(2);
-        } else {
-            char c = check_short_arg(name);
-            if (shorthand.count(c) == 0) {
-                std::stringstream s;
-                s << "Error parsing '" << name << "': ";
-                s << "Argument does not exist.";
-                throw std::runtime_error(s.str());
-            }
-            return shorthand.at(c);
-        }
-    }
-
-    bool is_argument(const std::string& name)
-    {
-        return name.size() > 0 && name[0] == '-';
-    }
-
-    void assert_arg(bool expr, const std::string& arg, const std::string& msg)
-    {
-        if (expr) {
-            std::stringstream s;
-            s << "Error parsing '" << arg << "': ";
-            s << msg;
-            throw std::runtime_error(s.str());
-        }
-    }
-
-    ArgBlock ArgChain::parse(int nargs, const std::vector<ArgParse> &argdefs)
+    ArgBlock ArgChain::parse(int nargs, bool stop_at_end,
+        const std::vector<ArgParse>& argdefs)
     {
         ArgBlock block;
         block.m_nargs = nargs;
+        // Sort out shorthand and longhand names
+        // Shorthand simply maps flags to longhand names
         std::map<std::string, const ArgParse&> longhand;
         std::map<char, std::string> shorthand;
         for (auto& def : argdefs) {
@@ -83,21 +108,27 @@ namespace cli {
             block.m_valid.insert(def.m_name);
         }
         while (!this->m_args.empty()) {
+            if (nargs <= 0 && stop_at_end) {
+                break;
+            }
             std::string arg = this->m_args.front();
-            if (is_argument(arg)) {
+            if (is_option(arg)) {
                 auto fullname = get_full_name(arg, shorthand);
-                assert_arg(longhand.count(fullname) == 0, arg,
-                    "Argument does not exist.");
-                assert_arg(block.m_values.count(fullname) != 0, arg,
-                    "Duplicate argument");
-                const ArgParse& parse = longhand.at(fullname);
-                if (parse.m_hasarg) {
+                if (longhand.count(fullname) == 0) {
+                    throw ArgException(ArgException::TYPE_OPTION_UNKNOWN, arg);
+                }
+                if (block.m_values.count(fullname) != 0) {
+                    throw ArgException(ArgException::TYPE_OPTION_DUPLICATE, arg);
+                }
+                if (longhand.at(fullname).m_hasarg) {
                     this->m_args.pop();
-                    assert_arg(this->m_args.empty(), arg,
-                    "Expected argument.");
+                    if (this->m_args.empty()) {
+                        throw ArgException(ArgException::TYPE_OPTION_EXPECTED_ARG, arg);
+                    }
                     const std::string& newarg = this->m_args.front();
-                    assert_arg(is_argument(newarg), arg,
-                    "Expected argument.");
+                    if (is_option(newarg)) {
+                        throw ArgException(ArgException::TYPE_OPTION_EXPECTED_ARG, arg);
+                    }
                     block.m_values[fullname] = newarg;
                 } else {
                     block.m_values[fullname] = "";
@@ -114,32 +145,53 @@ namespace cli {
         return block;
     }
 
+    ArgBlock ArgChain::parse_no_options(int nargs)
+    {
+        ArgBlock block;
+        block.m_nargs = nargs;
+        // Sort out shorthand and longhand names
+        // Shorthand simply maps flags to longhand names
+        while (!this->m_args.empty()) {
+            std::string arg = this->m_args.front();
+            if (is_option(arg)) {
+                break;
+            } else {
+                if (nargs <= 0) {
+                    break;
+                }
+                nargs --;
+                block.m_args.push_back(arg);
+            }
+            this->m_args.pop();
+        }
+        return block;
+    }
+
     void ArgChain::assert_finished() const {
         if (!this->m_args.empty()) {
-            std::stringstream s;
-            s << "Error: ";
-            s << "Too many arguments.";
-            throw std::runtime_error(s.str());
+            throw ArgException(ArgException::TYPE_TOO_MANY_ARGS, "");
         }
     }
 
     void ArgBlock::assert_all_args() const
     {
         if (this->m_nargs != int(this->size())) {
-            std::stringstream s;
-            s << "Error: ";
-            s << "Expected " << this->m_nargs << " arguments.";
-            throw std::runtime_error(s.str());
+            auto t = ArgException::TYPE_NOT_ENOUGH_ARGS;
+            if (int(this->size()) > this->m_nargs) {
+                t = ArgException::TYPE_TOO_MANY_ARGS;
+            }
+            throw ArgException(t, std::to_string(this->m_nargs));
         }
     }
 
     void ArgBlock::assert_num_args(int n) const
     {
         if (n != int(this->size())) {
-            std::stringstream s;
-            s << "Error: ";
-            s << "Expected " << n << " arguments.";
-            throw std::runtime_error(s.str());
+            auto t = ArgException::TYPE_NOT_ENOUGH_ARGS;
+            if (int(this->size()) > n) {
+                t = ArgException::TYPE_TOO_MANY_ARGS;
+            }
+            throw ArgException(t, std::to_string(n));
         }
     }
 
@@ -151,6 +203,8 @@ namespace cli {
                 std::stringstream s;
                 s << "Unexpected option '--" << namepair.first << "'";
                 throw std::runtime_error(s.str());
+                throw ArgException(ArgException::TYPE_OPTION_INVALID,
+                    "--" + namepair.first);
             }
         }
     }
@@ -185,10 +239,8 @@ namespace cli {
             return this->m_values.at(name);
         } else {
             if (this->m_valid.count(name) == 0) {
-                std::stringstream s;
-                s << "Error: Attempt to get non-defined argument '";
-                s << name << "'";
-                throw std::runtime_error(s.str());
+                throw ArgException(ArgException::TYPE_OPTION_INVALID,
+                    "--" + name);
             }
             return emptystr;
         }

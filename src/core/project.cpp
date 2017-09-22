@@ -5,29 +5,6 @@
 #include <glibmm.h>
 
 namespace core {
-    void do_simple_statement(sqlite3* db, const std::string& stmt_str)
-    {
-        sqlite3_stmt* statement;
-        int ok = sqlite3_prepare_v2(db,
-            stmt_str.c_str(), stmt_str.size(), &statement, nullptr);
-        if (ok != SQLITE_OK) {
-            auto err = std::runtime_error(sqlite3_errmsg(db));
-            sqlite3_finalize(statement);
-            throw err;
-        }
-        ok = sqlite3_step(statement);
-        if (ok != SQLITE_DONE) {
-            auto err = std::runtime_error(sqlite3_errmsg(db));
-            sqlite3_finalize(statement);
-            throw err;
-        }
-        ok = sqlite3_finalize(statement);
-        if (ok != SQLITE_OK) {
-            auto err = std::runtime_error(sqlite3_errmsg(db));
-            throw err;
-        }
-    }
-
     Project::Project(Glib::RefPtr<Gio::File>& path, bool force, int flags)
     : m_lock(std::make_shared<ProjectFolderLock>(path, force))
     , m_path(path)

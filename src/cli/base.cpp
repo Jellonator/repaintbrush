@@ -43,7 +43,7 @@ Use `repaintbrush help <command> to get further information about a command.`)";
     void base(const std::vector<std::string>& args)
     {
         ArgChain argchain(args);
-        ArgBlock argblock = argchain.parse(1, {
+        ArgBlock argblock = argchain.parse(1, true, {
             {"version", false, 'v'}
         });
         if (argblock.has_option("version")) {
@@ -73,6 +73,8 @@ Use `repaintbrush help <command> to get further information about a command.`)";
         try {
             base(args);
         } catch (std::exception& e) {
+            std::cout << e.what() << std::endl;
+        } catch (Glib::Exception& e) {
             std::cout << e.what() << std::endl;
         }
     }

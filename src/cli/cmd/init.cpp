@@ -13,7 +13,7 @@ Options:
 
     void command_init_func(ArgChain& args)
     {
-        ArgBlock block = args.parse(1, {
+        ArgBlock block = args.parse(1, false, {
             {"force", false, 'f'}
         });
         args.assert_finished();

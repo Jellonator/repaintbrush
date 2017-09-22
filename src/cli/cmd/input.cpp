@@ -12,7 +12,7 @@ R"(Usage: repaintbrush input add [-f] <directory>
 Manage the input folders of a RepaintBrush project.
 
 Options:
-    -f, --force        Force the creation of a project
+    -f, --force        Force opening of the project
 
 Commands:
     add                Add a folder as an input source
@@ -25,7 +25,7 @@ Commands:
 
     void command_input_func(ArgChain& args)
     {
-        ArgBlock block = args.parse(1, {});
+        ArgBlock block = args.parse(1, true, {});
         block.assert_all_args();
         const std::string& cmd = block[0];
         if (cmd == "add") {
@@ -42,7 +42,7 @@ Commands:
 
     void command_input_add(ArgChain& args)
     {
-        ArgBlock block = args.parse(1, {
+        ArgBlock block = args.parse(1, false, {
             {"force", false, 'f'}
         });
         block.assert_all_args();
@@ -61,7 +61,7 @@ Commands:
 
     void command_input_remove(ArgChain& args)
     {
-        ArgBlock block = args.parse(1, {
+        ArgBlock block = args.parse(1, false, {
             {"force", false, 'f'}
         });
         block.assert_all_args();
@@ -80,7 +80,7 @@ Commands:
 
     void command_input_list(ArgChain& args)
     {
-        ArgBlock block = args.parse(0, {
+        ArgBlock block = args.parse(0, false, {
             {"force", false, 'f'}
         });
         block.assert_all_args();

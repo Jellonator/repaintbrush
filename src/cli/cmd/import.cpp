@@ -10,12 +10,12 @@ R"(Usage: repaintbrush import [-i input] [-f] <target>
 Import input images into the target folder.
 
 Options:
-    -f, --force            Force the creation of a project
+    -f, --force            Force opening of the project
     -i, --input <input>    Only import from the given input folder)";
 
     void command_import_func(ArgChain& args)
     {
-        ArgBlock block = args.parse(1, {
+        ArgBlock block = args.parse(1, false, {
             {"force", false, 'f'},
             {"input", true, 'i'}
         });

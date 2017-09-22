@@ -8,7 +8,7 @@ R"(Usage: repaintbrush help <command>
 Print help text about the given command.)";
     void command_help_func(ArgChain& args)
     {
-        ArgBlock block = args.parse(1, {});
+        ArgBlock block = args.parse(1, true, {});
         args.assert_finished();
         if (block.size() == 0) {
             base_help();
