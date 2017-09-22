@@ -16,6 +16,7 @@ Options:
         ArgBlock block = args.parse(1, {
             {"force", false, 'f'}
         });
+        args.assert_finished();
         // block.assert_all_args();
         std::string targetpath = ".";
         if (block.size() >= 1) {
@@ -37,7 +38,7 @@ Options:
                 return;
             }
         }
-        bool do_force = block.get_option("force");
+        bool do_force = block.has_option("force");
         {
             auto versionpath = path_project->get_child(core::rbrush_version_name);
             auto versionwrite = versionpath->replace();

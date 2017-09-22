@@ -41,18 +41,8 @@ namespace cli {
 
         const std::vector<std::string>& get_arguments() const;
         bool has_option(const std::string& name) const;
-        ArgResult get_option(const std::string& name) const;
+        const std::string& get_option(const std::string& name) const;
         const std::string& operator[](size_t i) const;
-        ArgResult operator[](const std::string& key) const;
-    };
-
-    class ArgResult {
-        friend class ArgBlock;
-        friend class ArgChain;
-        std::string m_value;
-        bool m_valid;
-    public:
-        const std::string& get();
-        operator bool() const;
+        const std::string& operator[](const std::string& key) const;
     };
 }

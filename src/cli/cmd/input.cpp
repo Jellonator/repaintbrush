@@ -46,15 +46,12 @@ Commands:
             {"force", false, 'f'}
         });
         block.assert_all_args();
-        auto path = core::get_project_directory(Glib::get_current_dir());
-        if (!path) {
-            std::cout << "Could not find repaintbrush project folder." << std::endl;
-            return;
-        }
         auto force = block.has_option("force");
-        core::Project project = core::Project::connect(*path, force);
+        auto project = core::get_project(force);
+        if (!project) return;
+
         auto inputpath = Gio::File::create_for_commandline_arg(block[0]);
-        if (project.add_inputfolder(inputpath)) {
+        if (project->add_inputfolder(inputpath)) {
             std::cout << "Input folder '" << inputpath->get_path() <<
                 "' already exists." << std::endl;
         } else {
@@ -68,15 +65,12 @@ Commands:
             {"force", false, 'f'}
         });
         block.assert_all_args();
-        auto path = core::get_project_directory(Glib::get_current_dir());
-        if (!path) {
-            std::cout << "Could not find repaintbrush project folder." << std::endl;
-            return;
-        }
         auto force = block.has_option("force");
-        core::Project project = core::Project::connect(*path, force);
+        auto project = core::get_project(force);
+        if (!project) return;
+
         auto inputpath = Gio::File::create_for_commandline_arg(block[0]);
-        if (project.remove_inputfolder(inputpath)) {
+        if (project->remove_inputfolder(inputpath)) {
             std::cout << "Folder '" << inputpath->get_path() <<
                 "' does not exist." << std::endl;
         } else {
@@ -90,14 +84,11 @@ Commands:
             {"force", false, 'f'}
         });
         block.assert_all_args();
-        auto path = core::get_project_directory(Glib::get_current_dir());
-        if (!path) {
-            std::cout << "Could not find repaintbrush project folder." << std::endl;
-            return;
-        }
-        auto force = block.has_option("force");
-        core::Project project = core::Project::connect(*path, force);
-        auto list = project.list_input_folders();
+        args.assert_finished();
+        bool force = block.has_option("force");
+        auto project = core::get_project(force);
+        if (!project) return;
+        auto list = project->list_input_folders();
         if (list.size() == 0) {
             std::cout << "There are no input folders." << std::endl;
         } else {

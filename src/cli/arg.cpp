@@ -178,12 +178,11 @@ namespace cli {
         return this->m_values.count(name) != 0;
     }
 
-    ArgResult ArgBlock::get_option(const std::string& name) const
+    const std::string emptystr = "";
+    const std::string& ArgBlock::get_option(const std::string& name) const
     {
-        ArgResult ret;
         if (this->m_values.count(name) != 0) {
-            ret.m_valid = true;
-            ret.m_value = this->m_values.at(name);
+            return this->m_values.at(name);
         } else {
             if (this->m_valid.count(name) == 0) {
                 std::stringstream s;
@@ -191,10 +190,8 @@ namespace cli {
                 s << name << "'";
                 throw std::runtime_error(s.str());
             }
-            ret.m_valid = false;
-            ret.m_value = "";
+            return emptystr;
         }
-        return ret;
     }
 
     const std::string& ArgBlock::operator[](size_t i) const
@@ -202,18 +199,8 @@ namespace cli {
         return this->m_args[i];
     }
 
-    ArgResult ArgBlock::operator[](const std::string& key) const
+    const std::string& ArgBlock::operator[](const std::string& name) const
     {
-        return this->get_option(key);
-    }
-
-    ArgResult::operator bool() const
-    {
-        return this->m_valid;
-    }
-
-    const std::string& ArgResult::get()
-    {
-        return this->m_value;
+        return this->get_option(name);
     }
 }

@@ -1,7 +1,9 @@
 import os
 
 env = Environment()
-env.MergeFlags(['!pkg-config gtkmm-3.0 glibmm-2.4 giomm-2.4 sqlite3 --cflags --libs', '-Wall'])
+env.MergeFlags([
+    '!pkg-config gtkmm-3.0 glibmm-2.4 giomm-2.4 sqlite3 --cflags --libs',
+    '-Wall', '-Wextra', '-Wpedantic'])
 env.Append(CXXFLAGS='-std=c++14')
 env['ENV']['TERM'] = os.environ['TERM']
 

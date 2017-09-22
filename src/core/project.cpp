@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <glibmm.h>
 
 namespace core {
     void do_simple_statement(sqlite3* db, const std::string& stmt_str)
@@ -121,5 +122,16 @@ namespace core {
             }
         }
         return ret;
+    }
+
+    boost::optional<Project> get_project(bool force)
+    {
+        auto path = core::get_project_directory(Glib::get_current_dir());
+        if (!path) {
+            std::cout << "Could not find repaintbrush project folder." << std::endl;
+            return {};
+        }
+        core::Project project = core::Project::connect(*path, force);
+        return project;
     }
 }

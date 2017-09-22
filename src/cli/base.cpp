@@ -34,9 +34,10 @@ Use `repaintbrush help <command> to get further information about a command.`)";
     }
 
     const std::map<std::string, Command> command_definitions = {
-        {"help", {command_help_func, command_help_string}},
-        {"init", {command_init_func, command_init_string}},
-        {"input", {command_input_func, command_input_string}}
+        {  "help", {  command_help_func,   command_help_string}},
+        {  "init", {  command_init_func,   command_init_string}},
+        { "input", { command_input_func,  command_input_string}},
+        {"import", {command_import_func, command_import_string}}
     };
 
     void base(const std::vector<std::string>& args)

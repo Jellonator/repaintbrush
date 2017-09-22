@@ -22,11 +22,11 @@ namespace core {
 
         /// Connect to an existing database.
         /// The database must exist and will throw an error if it does not.
-        static Project connect(Glib::RefPtr<Gio::File>& path, bool force=false);
+        static Project connect(Glib::RefPtr<Gio::File>& path, bool force);
 
         /// Connect to a database, creating it if necessary.
         /// Throws an exception if a database could not be created.
-        static Project create(Glib::RefPtr<Gio::File>& path, bool force=false);
+        static Project create(Glib::RefPtr<Gio::File>& path, bool force);
 
         /// Get a reference to this project's underlying database
 
@@ -43,4 +43,6 @@ namespace core {
         /// Get a list of input folders.
         std::vector<std::string> list_input_folders();
     };
+
+    boost::optional<Project> get_project(bool force);
 }
