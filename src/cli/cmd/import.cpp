@@ -1,6 +1,5 @@
 #include "import.h"
 #include <iostream>
-#include <glibmm.h>
 #include "../../core/project.h"
 
 namespace cli {
@@ -21,11 +20,10 @@ Options:
         });
         args.assert_finished();
         bool force = block.has_option("force");
-        std::string import_folder = ".";
+        fs::path import_folder = ".";
         if (block.has_option("input")) {
             import_folder = block.get_option("input");
         }
-        auto importpath = Gio::File::create_for_commandline_arg(import_folder);
         auto project = core::get_project(force);
         if (!project) return;
     }

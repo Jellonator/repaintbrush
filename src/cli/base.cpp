@@ -30,7 +30,7 @@ Commands:
 Use `repaintbrush help <command> to get further information about a command.`)";
     void base_help()
     {
-        std::cout << base_help_string << '\n' << std::endl;
+        std::cout << base_help_string << std::endl;
     }
 
     const std::map<std::string, Command> command_definitions = {
@@ -73,8 +73,6 @@ Use `repaintbrush help <command> to get further information about a command.`)";
         try {
             base(args);
         } catch (std::exception& e) {
-            std::cout << e.what() << std::endl;
-        } catch (Glib::Exception& e) {
             std::cout << e.what() << std::endl;
         }
     }

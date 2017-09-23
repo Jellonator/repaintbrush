@@ -1,46 +1,50 @@
 #include "util.h"
 #include <glibmm/fileutils.h>
+#include <iostream>
 
 namespace core {
-    boost::optional<Glib::RefPtr<Gio::File>> get_project_directory(
-        const std::string& current_directory)
+    boost::optional<fs::path> get_project_directory(
+        const fs::path& current_directory)
     {
-        auto file = Gio::File::create_for_path(current_directory);
+        fs::path ret = current_directory;
         while (true) {
-            auto child = file->get_child(rbrush_folder_name);
-            auto childtype = child->query_file_type();
-            if (childtype == Gio::FileType::FILE_TYPE_DIRECTORY) {
-                return file;
+            fs::path child = ret / rbrush_folder_name;
+            if (fs::is_directory(ret)) {
+                return ret;
             }
-            if (!file->has_parent()) {
+            if (ret.has_parent_path()) {
+                ret = ret.parent_path();
+            } else {
                 break;
             }
-            file = file->get_parent();
         }
-        return boost::none;
+        return {};
     }
 
-    ProjectFolderLock::ProjectFolderLock(Glib::RefPtr<Gio::File>& fh,
-        bool force)
-    : m_lockpath(fh->get_child(rbrush_folder_name)->get_child(rbrush_lock_name))
+    ProjectFolderLock::ProjectFolderLock(const fs::path& path, bool force)
+    : m_lockpath(path / rbrush_lock_name)
     {
-        if (force) {
-            try {
-                this->m_lockpath->create_file();
-            } catch (Gio::Error& e) {
-                // This is fine
+        fs::fstream f;
+        f.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        try {
+            f.open(this->m_lockpath, std::ios::out);
+        } catch (const std::ifstream::failure& e) {
+            if (!force) {
+                throw e;
+            } else {
+                std::cout << "Could not aquire lock on project, forcing lock."
+                    << std::endl;
             }
-        } else {
-            this->m_lockpath->create_file();
         }
     }
 
     ProjectFolderLock::~ProjectFolderLock()
     {
-        if (this->m_lockpath) {
+        // TODO
+        if (this->m_valid) {
             try {
-                this->m_lockpath->remove();
-            } catch (Glib::FileError& error) {
+                fs::remove(this->m_lockpath);
+            } catch (...) {
                 // Do nothing, doesn't matter
             }
         }
@@ -49,14 +53,12 @@ namespace core {
     ProjectFolderLock::ProjectFolderLock(ProjectFolderLock&& other)
     {
         this->m_lockpath = other.m_lockpath;
-        other.m_lockpath.reset();
         other.m_valid = false;
     }
 
     ProjectFolderLock& ProjectFolderLock::operator=(ProjectFolderLock&& other)
     {
         this->m_lockpath = other.m_lockpath;
-        other.m_lockpath.reset();
         other.m_valid = false;
         return *this;
     }

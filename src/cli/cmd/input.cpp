@@ -1,6 +1,5 @@
 #include "input.h"
 #include <iostream>
-#include <glibmm.h>
 #include "../../core/project.h"
 
 namespace cli {
@@ -50,9 +49,9 @@ Commands:
         auto project = core::get_project(force);
         if (!project) return;
 
-        auto inputpath = Gio::File::create_for_commandline_arg(block[0]);
+        fs::path inputpath = block[0];
         if (project->add_inputfolder(inputpath)) {
-            std::cout << "Input folder '" << inputpath->get_path() <<
+            std::cout << "Input folder '" << inputpath.string() <<
                 "' already exists." << std::endl;
         } else {
             std::cout << "Successfully added input folder." << std::endl;
@@ -69,9 +68,9 @@ Commands:
         auto project = core::get_project(force);
         if (!project) return;
 
-        auto inputpath = Gio::File::create_for_commandline_arg(block[0]);
+        fs::path inputpath = block[0];
         if (project->remove_inputfolder(inputpath)) {
-            std::cout << "Folder '" << inputpath->get_path() <<
+            std::cout << "Folder '" << inputpath.string() <<
                 "' does not exist." << std::endl;
         } else {
             std::cout << "Successfully removed input folder." << std::endl;

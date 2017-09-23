@@ -1,8 +1,11 @@
 #pragma once
+
 #include <sqlite3.h>
 #include <string>
 #include <memory>
+#include <boost/filesystem.hpp>
 #include "statement.h"
+namespace fs = boost::filesystem;
 
 namespace database {
     class Database {
@@ -16,7 +19,7 @@ namespace database {
         Database& operator=(const Database& other) = delete;
 
         /// Create a new connection to a database.
-        Database(const std::string& path, int flags);
+        Database(const fs::path& path, int flags);
 
         /// Prepare an SQL statement.
         Statement prepare(const std::string& statement);

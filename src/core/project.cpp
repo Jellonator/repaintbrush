@@ -2,21 +2,19 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <glibmm.h>
 
 namespace core {
-    Project::Project(Glib::RefPtr<Gio::File>& path, bool force, int flags)
-    : m_lock(std::make_shared<ProjectFolderLock>(path, force))
+    Project::Project(const fs::path& path, bool force, int flags)
+    : m_lock(path / rbrush_folder_name, force)
     , m_path(path)
-    , m_database(path->get_child(rbrush_folder_name)->get_child(rbrush_db_name)
-        ->get_path(), flags) {}
+    , m_database(path / rbrush_folder_name / rbrush_db_name, flags) {}
 
-    Project Project::connect(Glib::RefPtr<Gio::File>& path, bool force)
+    Project Project::connect(const fs::path& path, bool force)
     {
         return Project(path, force, SQLITE_OPEN_READWRITE);
     }
 
-    Project Project::create(Glib::RefPtr<Gio::File>& path, bool force)
+    Project Project::create(const fs::path& path, bool force)
     {
         Project project(path, force, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
         {
@@ -45,12 +43,11 @@ namespace core {
         return this->m_database;
     }
 
-    bool Project::add_inputfolder(Glib::RefPtr<Gio::File>& path)
+    bool Project::add_inputfolder(const fs::path& path)
     {
-        if (path->query_file_type() != Gio::FileType::FILE_TYPE_DIRECTORY) {
+        if (!fs::is_directory(path)) {
             std::stringstream s;
-            s << "Error: '" << path->get_path()
-                << "' is not a valid directory!";
+            s << "Error: '" << path.string() << "' is not a valid directory!";
             throw std::runtime_error(s.str());
         }
         auto& db = this->get_database();
@@ -58,7 +55,7 @@ namespace core {
             R"(INSERT INTO inputfolders(name)
             VALUES (?))"
         );
-        stmt.bind(1, path->get_path());
+        stmt.bind(1, fs::canonical(path).string());
         try {
             stmt.finish();
         } catch (std::exception& e) {
@@ -72,23 +69,23 @@ namespace core {
         return false;
     }
 
-    bool Project::remove_inputfolder(Glib::RefPtr<Gio::File>& path)
+    bool Project::remove_inputfolder(const fs::path& path)
     {
         auto& db = this->get_database();
         auto stmt = db.prepare(
             R"(DELETE FROM inputfolders
             WHERE name = ?)"
         );
-        stmt.bind(1, path->get_path());
+        stmt.bind(1, fs::canonical(path).string());
         stmt.finish();
         // std::cout << sqlite3_changes(db.get_ptr())
         // << " rows were deleted." << std::endl;
         return sqlite3_changes(db.get_ptr()) == 0;
     }
 
-    std::vector<std::string> Project::list_input_folders()
+    std::vector<fs::path> Project::list_input_folders()
     {
-        std::vector<std::string> ret;
+        std::vector<fs::path> ret;
         auto& db = this->get_database();
         auto stmt = db.prepare(
             R"(SELECT name FROM inputfolders)"
@@ -103,7 +100,7 @@ namespace core {
 
     boost::optional<Project> get_project(bool force)
     {
-        auto path = core::get_project_directory(Glib::get_current_dir());
+        auto path = core::get_project_directory(fs::current_path());
         if (!path) {
             std::cout << "Could not find repaintbrush project folder." << std::endl;
             return {};

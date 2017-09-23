@@ -1,16 +1,15 @@
 #pragma once
 #include <memory>
 #include <sqlite3.h>
-#include <giomm/file.h>
 #include "util.h"
 #include "db/database.h"
 
 namespace core {
     class Project {
-        std::shared_ptr<ProjectFolderLock> m_lock;
-        Glib::RefPtr<Gio::File> m_path;
+        ProjectFolderLock m_lock;
+        fs::path m_path;
         database::Database m_database;
-        Project(Glib::RefPtr<Gio::File>& path,
+        Project(const fs::path& path,
             bool force, int flags);
     public:
         // May move a project
@@ -22,11 +21,11 @@ namespace core {
 
         /// Connect to an existing database.
         /// The database must exist and will throw an error if it does not.
-        static Project connect(Glib::RefPtr<Gio::File>& path, bool force);
+        static Project connect(const fs::path& path, bool force);
 
         /// Connect to a database, creating it if necessary.
         /// Throws an exception if a database could not be created.
-        static Project create(Glib::RefPtr<Gio::File>& path, bool force);
+        static Project create(const fs::path& path, bool force);
 
         /// Get a reference to this project's underlying database
 
@@ -34,14 +33,14 @@ namespace core {
 
         /// Add a folder to input folders
         /// Returns true if the folder already exists.
-        bool add_inputfolder(Glib::RefPtr<Gio::File>& path);
+        bool add_inputfolder(const fs::path& path);
 
         /// Remove a folder from input folders
         /// Returns true if the folder does not exist.
-        bool remove_inputfolder(Glib::RefPtr<Gio::File>& path);
+        bool remove_inputfolder(const fs::path& path);
 
         /// Get a list of input folders.
-        std::vector<std::string> list_input_folders();
+        std::vector<fs::path> list_input_folders();
     };
 
     boost::optional<Project> get_project(bool force);

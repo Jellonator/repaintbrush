@@ -18,33 +18,25 @@ Options:
         });
         args.assert_finished();
         // block.assert_all_args();
-        std::string targetpath = ".";
+        fs::path path_base = ".";
         if (block.size() >= 1) {
-            targetpath = block[0];
+            path_base = block[0];
         }
-        auto path = Gio::File::create_for_commandline_arg(targetpath);
-        auto path_project = path->get_child(core::rbrush_folder_name);
-        try {
-            if (!path_project->make_directory_with_parents()) {
-                std::cout << "Could not create project." << std::endl;
-                return;
-            }
-        } catch (Gio::Error& e) {
-            if (e.code() != Gio::Error::Code::EXISTS) {
-                throw e;
-            } else {
-                // If folder already exists, it's totally fine
-                std::cout << "Project already exists." << std::endl;
-                return;
-            }
+        auto path_project = path_base / core::rbrush_folder_name;
+        // Create project folder
+        if (fs::exists(path_project)) {
+            std::cout << "Could not create project; project already exists."
+                      << std::endl;
+            return;
         }
+        fs::create_directories(path_project);
+        // Create version file
+        fs::ofstream file_version(path_project / core::rbrush_version_name);
+        file_version << core::version;
+        file_version.close();
+        // Create project
         bool do_force = block.has_option("force");
-        {
-            auto versionpath = path_project->get_child(core::rbrush_version_name);
-            auto versionwrite = versionpath->replace();
-            versionwrite->write(core::version);
-            auto project = core::Project::create(path, do_force);
-        }
+        auto project = core::Project::create(path_base, do_force);
         std::cout << "Successfully created project." << std::endl;
     }
 }
