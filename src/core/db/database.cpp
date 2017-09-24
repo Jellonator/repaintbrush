@@ -1,6 +1,5 @@
 #include "database.h"
 #include <stdexcept>
-#include <iostream>
 
 namespace database {
     Database::Database(const fs::path& path, int flags)
@@ -9,7 +8,6 @@ namespace database {
         sqlite3* db;
         int ok = sqlite3_open_v2(path.c_str(), &db, flags, nullptr);
         if (ok != SQLITE_OK) {
-            std::cout << path.string() << std::endl;
             auto err = std::runtime_error(sqlite3_errmsg(db));
             sqlite3_close(db);
             throw err;
@@ -25,5 +23,15 @@ namespace database {
     sqlite3* Database::get_ptr()
     {
         return this->m_database.get();
+    }
+
+    void Database::execute(const std::string& statement)
+    {
+        int ok = sqlite3_exec(this->get_ptr(), statement.c_str(),
+            nullptr, nullptr, nullptr);
+        if (ok != SQLITE_OK) {
+            auto err = std::runtime_error(sqlite3_errmsg(this->get_ptr()));
+            throw err;
+        }
     }
 }

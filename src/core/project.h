@@ -28,7 +28,6 @@ namespace core {
         static Project create(const fs::path& path, bool force);
 
         /// Get a reference to this project's underlying database
-
         database::Database& get_database();
 
         /// Add a folder to input folders
@@ -41,6 +40,22 @@ namespace core {
 
         /// Get a list of input folders.
         std::vector<fs::path> list_input_folders();
+
+        /// Get this project's path.
+        const fs::path& get_path() const;
+
+        /// Check if a file exists.
+        bool has_file(const fs::path& path);
+
+        /// Register a file into database.
+        /// Returns true if the file already exists.
+        bool register_file(const fs::path& path);
+
+        /// Checks registered files.
+        /// Checks all files in the project directory with registered files,
+        /// and remove registered files that no longer exist.
+        /// Returns a list of all files that were removed.
+        std::vector<fs::path> check();
     };
 
     boost::optional<Project> get_project(bool force);

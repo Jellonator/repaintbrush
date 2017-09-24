@@ -16,6 +16,12 @@ namespace database {
         this->m_statement.reset(stmt);
     }
 
+    void Statement::reset()
+    {
+        sqlite3_reset(this->stmt_ptr());
+        this->m_status = SQLITE_OK;
+    }
+
     int Statement::step()
     {
         this->m_status = sqlite3_step(this->m_statement.get());

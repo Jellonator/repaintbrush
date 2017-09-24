@@ -26,5 +26,8 @@ namespace database {
 
         /// Get a pointer to this Database's underlying database.
         sqlite3* get_ptr();
+
+        /// Perform a simple SQL statement
+        void execute(const std::string& statement);
     };
 }

@@ -9,7 +9,7 @@ namespace core {
         fs::path ret = current_directory;
         while (true) {
             fs::path child = ret / rbrush_folder_name;
-            if (fs::is_directory(ret)) {
+            if (fs::is_directory(child)) {
                 return ret;
             }
             if (ret.has_parent_path()) {
