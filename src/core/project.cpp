@@ -140,18 +140,17 @@ namespace core {
     {
         std::vector<fs::path> ret;
         auto& db = this->get_database();
-        db.execute("BEGIN TRANSACTION");
-        bool made_table = false;
         // insert every image into a temporary database
         // since many values are being inserted at one time, a transaction will
         // be made to speed up the process.
-        try {
-            db.execute(R"(
+        {
+            auto transaction = db.create_transaction();
+            transaction.push(R"(
                 CREATE TEMP TABLE imglist(
-                    name NTEXT NOT NULL
-                )
-            )");
-            made_table = true;
+                    name NTEXT NOT NULL)
+                )",
+                R"(DROP TABLE imglist)"
+            );
             auto insertstmt = db.prepare(R"(
                 INSERT INTO imglist(name)
                 VALUES (?)
@@ -162,40 +161,91 @@ namespace core {
                 insertstmt.bind(1, file.filename().string());
                 insertstmt.finish();
             }
-        } catch (...) {
-            // if an exception is thrown, do some clean up, then rethrow it.
-            if (made_table) {
-                db.execute(R"(DROP TABLE imglist)");
-            }
-            db.execute("END TRANSACTION");
-            throw;
-        }
-        // Find all files that are in the table 'images' but not in the
-        // temporary table 'imglist'. Note that it is fine for files to
-        // exist but not be registered.
-        auto findstmt = db.prepare(R"(
-            SELECT images.name FROM images
-            LEFT OUTER JOIN imglist
-            ON images.name = imglist.name
-            WHERE imglist.name IS NULL
-        )");
-        while (SQLITE_ROW == findstmt.step()) {
-            std::string value = findstmt.column_value<std::string>(1);
-            ret.push_back(value);
-        }
-        auto deletestmt = db.prepare(R"(
-            DELETE FROM images
-            WHERE images.name IN (
+            // Find all files that are in the table 'images' but not in the
+            // temporary table 'imglist'. Note that it is fine for files to
+            // exist but not be registered.
+            auto findstmt = db.prepare(R"(
                 SELECT images.name FROM images
                 LEFT OUTER JOIN imglist
                 ON images.name = imglist.name
                 WHERE imglist.name IS NULL
-            )
-        )");
-        deletestmt.finish();
-        db.execute(R"(DROP TABLE imglist)");
-        db.execute("END TRANSACTION");
+            )");
+            while (SQLITE_ROW == findstmt.step()) {
+                std::string value = findstmt.column_value<std::string>(1);
+                ret.push_back(value);
+            }
+            auto deletestmt = db.prepare(R"(
+                DELETE FROM images
+                WHERE images.name IN (
+                    SELECT images.name FROM images
+                    LEFT OUTER JOIN imglist
+                    ON images.name = imglist.name
+                    WHERE imglist.name IS NULL
+                )
+            )");
+            deletestmt.finish();
+        }
         return ret;
+    }
+
+    std::pair<int, int> Project::import(fs::path export_folder,
+        boost::optional<fs::path> import_folder)
+    {
+        int num_folders = 0;
+        int num_files = 0;
+        // make sure export folder exists
+        export_folder = fs::current_path() / export_folder;
+        fs::create_directories(export_folder);
+        auto& db = this->get_database();
+        {
+            // Put all images into a database
+            auto folders = this->list_input_folders();
+            auto transaction = db.create_transaction();
+            transaction.push(R"(
+                CREATE TEMP TABLE imglist(
+                    name NTEXT NOT NULL,
+                    path NTEXT NOT NULL
+                ))",
+                R"(DROP TABLE imglist)"
+            );
+            auto insertstmt = db.prepare(R"(
+                INSERT INTO imglist(name, path)
+                VALUES (?1, ?2)
+            )");
+            for (const fs::path& folder : folders) {
+                if (!import_folder || fs::equivalent(*import_folder, folder)) {
+                    ++num_folders;
+                    auto fileiter = fs::recursive_directory_iterator(folder);
+                    for (const fs::path& file : fileiter) {
+                        insertstmt.reset();
+                        insertstmt.bind(1, file.filename().string());
+                        insertstmt.bind(2, file.string());
+                        insertstmt.finish();
+                    }
+                }
+            }
+            auto selectstmt = db.prepare(R"(
+                SELECT imglist.name, imglist.path FROM imglist
+                LEFT OUTER JOIN images
+                ON imglist.name = images.name
+                WHERE images.name IS NULL
+            )");
+            auto insertfilestmt = db.prepare(R"(
+                INSERT INTO images(name)
+                VALUES (?)
+            )");
+            while (SQLITE_ROW == selectstmt.step()) {
+                num_files ++;
+                fs::path name = selectstmt.column_value<std::string>(1);
+                fs::path path = selectstmt.column_value<std::string>(2);
+                fs::path outfile = export_folder/name;
+                fs::copy(path, outfile);
+                insertfilestmt.reset();
+                insertfilestmt.bind(1, name.string());
+                insertfilestmt.finish();
+            }
+        }
+        return std::make_pair(num_folders, num_files);
     }
 
     boost::optional<Project> get_project(bool force)

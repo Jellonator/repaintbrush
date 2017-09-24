@@ -56,6 +56,14 @@ namespace core {
         /// and remove registered files that no longer exist.
         /// Returns a list of all files that were removed.
         std::vector<fs::path> check();
+
+        /// Import files into export_folder.
+        /// The optional argument import_folder specifies that only that folder
+        /// should be imported.
+        /// Returns a pair containint the number of folders used and the number
+        /// of files imported.
+        std::pair<int, int> import(fs::path export_folder,
+            boost::optional<fs::path> import_folder);
     };
 
     boost::optional<Project> get_project(bool force);

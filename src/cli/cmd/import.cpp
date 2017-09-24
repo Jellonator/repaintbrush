@@ -30,31 +30,15 @@ Options:
             export_folder = block[0];
         }
         // get project.
-        // TODO: Only copy files that have not already been imported
         bool force = block.has_option("force");
         auto project = core::get_project(force);
         if (!project) return;
-        // make sure export folder exists
-        export_folder = fs::current_path() / export_folder;
-        fs::create_directories(export_folder);
+
         // copy files
-        int folder_count = 0;
-        int file_count = 0;
-        for (const fs::path& folder : project->list_input_folders()) {
-            if (!import_folder || fs::equivalent(*import_folder, folder)) {
-                ++folder_count;
-                auto fileiter = fs::recursive_directory_iterator(folder);
-                for (const fs::path& file : fileiter) {
-                    fs::path outfile = export_folder/file.filename();
-                    if (fs::is_regular_file(file) && !fs::exists(outfile)
-                    && !project->has_file(outfile)) {
-                        fs::copy(file, outfile);
-                        project->register_file(outfile);
-                        ++file_count;
-                    }
-                }
-            }
-        }
+        auto result = project->import(export_folder, import_folder);
+        int folder_count = result.first;
+        int file_count = result.second;
+
         // Report information back to user.
         if (folder_count == 0) {
             std::cout << "No such import folder " << *import_folder

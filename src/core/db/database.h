@@ -8,6 +8,17 @@
 namespace fs = boost::filesystem;
 
 namespace database {
+    class Database;
+
+    class Transaction {
+        Database* m_db;
+        std::vector<std::string> m_cleanup;
+    public:
+        Transaction(Database* db);
+        ~Transaction();
+        void push(const std::string& exec, const std::string& cleanup);
+    };
+
     class Database {
         std::unique_ptr<sqlite3, decltype(&sqlite3_close_v2)> m_database;
     public:
@@ -29,5 +40,8 @@ namespace database {
 
         /// Perform a simple SQL statement
         void execute(const std::string& statement);
+
+        /// Create a new SQL transaction
+        Transaction create_transaction();
     };
 }
