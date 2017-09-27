@@ -48,6 +48,7 @@ namespace core {
         friend class FilterFactory;
         std::unique_ptr<IFilter> m_filter;
         std::string m_name;
+        bool m_valid_name;
         Filter(std::unique_ptr<IFilter> ptr, const std::string& name);
     public:
         /// Filter a path. Returns false if the path should be ignored.
@@ -63,6 +64,9 @@ namespace core {
         /// Returns true if this filter is valid.
         bool valid() const;
         operator bool() const;
+
+        /// Returns whether this filter has a valid name.
+        bool is_name_valid() const;
     };
 
     /// Factory for creating filters.

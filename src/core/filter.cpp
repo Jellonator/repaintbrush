@@ -58,7 +58,7 @@ namespace core {
 
     // Filter
     Filter::Filter(std::unique_ptr<IFilter> ptr, const std::string& name)
-    : m_filter(std::move(ptr)), m_name(name) {}
+    : m_filter(std::move(ptr)), m_name(name), m_valid_name(true) {}
 
     bool Filter::filter(const fs::path& path) const
     {
@@ -89,6 +89,11 @@ namespace core {
     {
         return this->valid();
     }
+
+    bool Filter::is_name_valid() const
+    {
+        return this->m_valid_name;
+    }
     
     // Filter Factory
     FilterFactory::FilterFactory()
@@ -100,8 +105,9 @@ namespace core {
     Filter FilterFactory::create(const std::string& name, const std::string& str) const
     {
         if (this->m_filters.count(name) == 0) {
-            // TODO: throw something useful
-            throw 1;
+            Filter ret(nullptr, name);
+            ret.m_valid_name = false;
+            return ret;
         }
         const auto& def = this->m_filters.at(name);
         return Filter(def.deserialize(str), name);
