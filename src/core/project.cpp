@@ -198,7 +198,7 @@ namespace core {
         fs::create_directories(export_folder);
         auto& db = this->get_database();
         {
-            // Put all images into a database
+            // Put all images that can be imported into a table
             auto folders = this->list_input_folders();
             auto transaction = db.create_transaction();
             transaction.push(R"(
@@ -224,6 +224,8 @@ namespace core {
                     }
                 }
             }
+            // find all files that exist in imglist but not in images, insert
+            // those files into images, and copy the files into export_folder.
             auto selectstmt = db.prepare(R"(
                 SELECT imglist.name, imglist.path FROM imglist
                 LEFT OUTER JOIN images

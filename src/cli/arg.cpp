@@ -1,5 +1,4 @@
 #include "arg.h"
-#include <algorithm>
 #include <stdexcept>
 #include <sstream>
 

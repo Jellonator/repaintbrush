@@ -49,6 +49,8 @@ namespace core {
 
         /// Register a file into database.
         /// Returns true if the file already exists.
+        /// Don't use this function for bulk importing, use Project::import
+        /// instead! This function can be slow when used with many files.
         bool register_file(const fs::path& path);
 
         /// Checks registered files.
