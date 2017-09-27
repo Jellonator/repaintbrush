@@ -5,6 +5,7 @@
 #include "cmd/import.h"
 #include "cmd/init.h"
 #include "cmd/input.h"
+#include "cmd/filter.h"
 
 namespace cli {
     // Base help is here instead of cmd/help.cpp since it does not correspond
@@ -26,6 +27,7 @@ Commands:
     help               Give help for a command
     input              Add or remove input directories
     import             Import files from input directories
+    filter             Manage file filters
 
 Use `repaintbrush help <command> to get further information about a command.`)";
     void base_help()
@@ -37,7 +39,8 @@ Use `repaintbrush help <command> to get further information about a command.`)";
         {  "help", {  command_help_func,   command_help_string}},
         {  "init", {  command_init_func,   command_init_string}},
         { "input", { command_input_func,  command_input_string}},
-        {"import", {command_import_func, command_import_string}}
+        {"import", {command_import_func, command_import_string}},
+        {"filter", {command_filter_func, command_filter_string}}
     };
 
     void base(const std::vector<std::string>& args)
