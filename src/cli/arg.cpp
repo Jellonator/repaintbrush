@@ -194,6 +194,14 @@ namespace cli {
         }
     }
 
+    void ArgBlock::assert_least_num_args(int n) const
+    {
+        if (n > int(this->size())) {
+            auto t = ArgException::TYPE_NOT_ENOUGH_ARGS;
+            throw ArgException(t, std::to_string(n));
+        }
+    }
+
     void ArgBlock::assert_options(
         const std::set<std::string>& exceptions) const
     {

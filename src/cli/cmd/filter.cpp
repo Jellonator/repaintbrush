@@ -47,7 +47,35 @@ Options:
 
     void command_filter_add(ArgChain& args)
     {
+        ArgBlock block = args.parse(3, false, {
+            {"force", false, 'f'}
+        });
+        block.assert_least_num_args(2);
+        bool force = block.has_option("force");
+        auto project = core::get_project(force);
+        if (!project) return;
 
+        const std::string& filter_type = block[0];
+        const std::string& filter_name = block[1];
+        std::string filter_arg = "";
+        if (block.size() >= 3) {
+            filter_arg = block[2];
+        }
+        
+        core::FilterFactory factory;
+        core::Filter filter = factory.create(filter_name, filter_arg);
+        if (!filter) {
+            if (!filter.is_name_valid()) {
+                std::cout << "Filter name '" << filter_name 
+                          << "' is not valid." << std::endl;
+            } else {
+                std::cout << "Invalid argument '" << filter_arg 
+                          << "' for filter type '" << filter_name << "'" 
+                          << std::endl;
+            }
+        }
+
+        // TODO: add filter
     }
 
     void command_filter_list(ArgChain& args)

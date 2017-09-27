@@ -97,6 +97,9 @@ namespace cli {
         /// Throw an exception if this block did not parse n arguments.
         void assert_num_args(int n) const;
 
+        /// Throw an exception if at least n arguments were not parsed.
+        void assert_least_num_args(int n) const;
+
         /// Assert that only the options defined in 'exceptions' were parsed.
         /// An exception will be thrown if this requirement is not met.
         void assert_options(const std::set<std::string>& exceptions) const;

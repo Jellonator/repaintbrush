@@ -18,9 +18,12 @@ bool filter_mipmaps(const fs::path& path)
 }
 
 namespace core {
-    // Filter Factory
+    // Filter MipMap
     std::unique_ptr<IFilter> FilterMipMap::deserialize(const std::string& arg)
     {
+        if (arg != "") {
+            return nullptr;
+        }
         return std::make_unique<FilterMipMap>();
     }
 
