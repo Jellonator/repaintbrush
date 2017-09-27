@@ -17,23 +17,26 @@ namespace core {
     Project Project::create(const fs::path& path, bool force)
     {
         Project project(path, force, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
-        {
-            auto stmt = project.get_database().prepare(R"(
-                CREATE TABLE IF NOT EXISTS images(
-                    name NTEXT NOT NULL,
-                    alias NTEXT
-                )
-            )");
-            stmt.finish();
-        }
-        {
-            auto stmt = project.get_database().prepare(R"(
-                CREATE TABLE IF NOT EXISTS inputfolders(
-                    name TEXT NOT NULL UNIQUE
-                )
-            )");
-            stmt.finish();
-        }
+        auto& db = project.get_database();
+        db.execute(R"(
+            CREATE TABLE IF NOT EXISTS images(
+                name TEXT NOT NULL,
+                alias TEXT
+            )
+        )");
+        db.execute(R"(
+            CREATE TABLE IF NOT EXISTS inputfolders(
+                name TEXT NOT NULL UNIQUE
+            )
+        )");
+        db.execute(R"(
+            CREATE TABLE IF NOT EXISTS filters(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                type INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                arg TEXT NOT NULL
+            )
+        )");
         return project;
     }
 
@@ -198,6 +201,11 @@ namespace core {
         fs::create_directories(export_folder);
         auto& db = this->get_database();
         {
+            // Get all filters
+            auto filters = this->get_filters();
+            filters.remove_if([](const auto& filter) {
+                return filter.type != FILTER_INPUT;
+            });
             // Put all images that can be imported into a table
             auto folders = this->list_input_folders();
             auto transaction = db.create_transaction();
@@ -217,6 +225,20 @@ namespace core {
                     ++num_folders;
                     auto fileiter = fs::recursive_directory_iterator(folder);
                     for (const fs::path& file : fileiter) {
+                        bool should_continue = false;
+                        for (const auto& filter : filters) {
+                            if (filter.filter(file)) {
+                                // Yeah, yeah, I know. I'm building the 
+                                // pyramids of Egypt over here. But you know
+                                // what? I just don't care. If it works, and it
+                                // looks alright, it's alright.
+                                should_continue = true;
+                                break;
+                            }
+                        }
+                        if (should_continue) {
+                            continue;
+                        }
                         insertstmt.reset();
                         insertstmt.bind(1, file.filename().string());
                         insertstmt.bind(2, file.string());
@@ -248,6 +270,55 @@ namespace core {
             }
         }
         return std::make_pair(num_folders, num_files);
+    }
+
+    void Project::add_filter(filter_t type, const Filter& filter)
+    {
+        auto& db = this->get_database();
+        auto insertstmt = db.prepare(R"(
+            INSERT INTO filters(type, name, arg)
+            VALUES(?1, ?2, ?3)
+        )");
+        insertstmt.bind(1, static_cast<int>(type));
+        insertstmt.bind(2, filter.get_name());
+        insertstmt.bind(3, filter.serialize());
+        insertstmt.finish();
+    }
+
+    std::list<Project::FilterData> Project::get_filters()
+    {
+        FilterFactory factory;
+        std::list<FilterData> ret;
+        auto& db = this->get_database();
+        auto selectstmt = db.prepare(R"(
+            SELECT id, type, name, arg
+            FROM filters
+        )");
+        while (SQLITE_ROW == selectstmt.step()) {
+            int id = selectstmt.column_value<int>(1);
+            int type = selectstmt.column_value<int>(2);
+            std::string name = selectstmt.column_value<std::string>(3);
+            std::string arg = selectstmt.column_value<std::string>(4);
+            ret.push_back(Project::FilterData {
+                factory.create(name, arg),
+                static_cast<filter_t>(type),
+                id
+            });
+        }
+
+        return ret;
+    }
+
+    bool Project::remove_filter(int id)
+    {
+        auto& db = this->get_database();
+        auto deletestmt = db.prepare(R"(
+            DELETE FROM filters
+            WHERE id = ?
+        )");
+        deletestmt.bind(1, id);
+        deletestmt.finish();
+        return sqlite3_changes(db.get_ptr()) == 0;
     }
 
     boost::optional<Project> get_project(bool force)

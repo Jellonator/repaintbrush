@@ -45,6 +45,7 @@ Commands:
             {"force", false, 'f'}
         });
         block.assert_all_args();
+        args.assert_finished();
         auto force = block.has_option("force");
         auto project = core::get_project(force);
         if (!project) return;
@@ -64,6 +65,7 @@ Commands:
             {"force", false, 'f'}
         });
         block.assert_all_args();
+        args.assert_finished();
         auto force = block.has_option("force");
         auto project = core::get_project(force);
         if (!project) return;

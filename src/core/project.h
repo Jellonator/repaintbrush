@@ -3,6 +3,7 @@
 #include <sqlite3.h>
 #include "util.h"
 #include "db/database.h"
+#include "filter.h"
 
 namespace core {
     class Project {
@@ -12,6 +13,18 @@ namespace core {
         Project(const fs::path& path,
             bool force, int flags);
     public:
+        /// Type defining a type of a filter
+        enum filter_t {
+            FILTER_INPUT = 0,
+            FILTER_OUTPUT = 1
+        };
+
+        struct FilterData {
+            Filter filter;
+            filter_t type;
+            int id;
+        };
+
         // May move a project
         Project(Project&& other) = default;
         Project& operator=(Project&& other) = default;
@@ -66,7 +79,21 @@ namespace core {
         /// of files imported.
         std::pair<int, int> import(fs::path export_folder,
             boost::optional<fs::path> import_folder);
+
+        /// Add a filter to this project.
+        void add_filter(filter_t type, const Filter& filter);
+
+        /// Get a list of filters
+        std::list<FilterData> get_filters();
+
+        /// Remove a filter from this project.
+        /// Returns true if filter of id does not exist
+        bool remove_filter(int id);
     };
 
+    /// Get the project.
+    /// Searches the current directory and all parents of the current directory
+    /// for a valid project, and return none if a project could not be found.
+    /// This function will perform a sanity check after opening the project.
     boost::optional<Project> get_project(bool force);
 }
