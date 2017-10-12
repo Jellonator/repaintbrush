@@ -1,4 +1,5 @@
 #include "filter.h"
+#include "util.h"
 #include <glibmm.h>
 #include <boost/algorithm/string.hpp>
 #include <regex>
@@ -69,7 +70,7 @@ namespace core {
 
     bool FilterPath::filter(const fs::path& base, const fs::path& path) const
     {
-        //TODO
+        return core::is_path_within_path(path, base/this->m_path);
     }
 
     std::string FilterPath::serialize() const
@@ -115,7 +116,7 @@ namespace core {
     {
         return this->m_valid_name;
     }
-    
+
     // Filter Factory
     FilterFactory::FilterFactory()
     : m_filters({

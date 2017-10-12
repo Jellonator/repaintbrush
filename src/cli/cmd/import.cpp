@@ -36,18 +36,20 @@ Options:
 
         // copy files
         auto result = project->import(export_folder, import_folder);
-        int folder_count = result.first;
-        int file_count = result.second;
 
         // Report information back to user.
-        if (folder_count == 0) {
+        if (result.folders == 0) {
             std::cout << "No such import folder " << *import_folder
                       << std::endl;
-        } else if (file_count == 0) {
+        } else if (result.files == 0) {
             std::cout << "No new files to import." << std::endl;
+            std::cout << "Filtered out " << result.filtered
+                      << " results." << std::endl;
         } else {
-            std::cout << "Successfully imported " << file_count << " files"
+            std::cout << "Successfully imported " << result.files << " files"
                       << std::endl;
+            std::cout << "Filtered out " << result.filtered
+                      << " results." << std::endl;
         }
     }
 }

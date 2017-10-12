@@ -36,7 +36,10 @@ Options:
             return;
         }
         fs::create_directories(exportpath);
-        project->export_to_folder(exportpath);
-        std::cout << "Successfully exported." << std::endl;
+        auto result = project->export_to_folder(exportpath);
+        std::cout << "Successfully exported " << result.files
+                  << " files." << std::endl;
+        std::cout << "Filtered out " << result.filtered
+                  << " results." << std::endl;
     }
 }

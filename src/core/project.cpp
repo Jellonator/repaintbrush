@@ -9,6 +9,8 @@ namespace core {
     , m_path(path)
     , m_database(path / rbrush_folder_name / rbrush_db_name, flags) {}
 
+    Project::Result::Result() : files(0), folders(0), filtered(0) {}
+
     Project Project::connect(const fs::path& path, bool force)
     {
         return Project(path, force, SQLITE_OPEN_READWRITE);
@@ -191,11 +193,10 @@ namespace core {
         return ret;
     }
 
-    std::pair<int, int> Project::import(fs::path export_folder,
+    Project::Result Project::import(fs::path export_folder,
         boost::optional<fs::path> import_folder)
     {
-        int num_folders = 0;
-        int num_files = 0;
+        Result ret;
         // make sure export folder exists
         export_folder = fs::current_path() / export_folder;
         fs::create_directories(export_folder);
@@ -222,7 +223,7 @@ namespace core {
             )");
             for (const fs::path& folder : folders) {
                 if (!import_folder || fs::equivalent(*import_folder, folder)) {
-                    ++num_folders;
+                    ++ ret.folders;
                     auto fileiter = fs::recursive_directory_iterator(folder);
                     for (const fs::path& file : fileiter) {
                         bool should_continue = false;
@@ -237,6 +238,7 @@ namespace core {
                             }
                         }
                         if (should_continue) {
+                            ++ ret.filtered;
                             continue;
                         }
                         insertstmt.reset();
@@ -259,7 +261,7 @@ namespace core {
                 VALUES (?)
             )");
             while (SQLITE_ROW == selectstmt.step()) {
-                num_files ++;
+                ++ ret.files;
                 fs::path name = selectstmt.column_value<std::string>(1);
                 fs::path path = selectstmt.column_value<std::string>(2);
                 fs::path outfile = export_folder/name;
@@ -269,11 +271,12 @@ namespace core {
                 insertfilestmt.finish();
             }
         }
-        return std::make_pair(num_folders, num_files);
+        return ret;
     }
 
-    void Project::export_to_folder(fs::path export_folder)
+    Project::Result Project::export_to_folder(fs::path export_folder)
     {
+        Result ret;
         auto& db = this->get_database();
         auto transaction = db.create_transaction();
 
@@ -308,9 +311,23 @@ namespace core {
         while (selectstmt.step() == SQLITE_ROW) {
             std::string name = selectstmt.column_value<std::string>(1);
             fs::path path = selectstmt.column_value<std::string>(2);
-            fs::copy_file(path, export_folder/name,
-                fs::copy_option::overwrite_if_exists);
+            bool should_copy = true;
+            for (const auto& filter : filters) {
+                if (filter.filter(this->get_path(), path)) {
+                    should_copy = false;
+                    break;
+                }
+            }
+            if (should_copy) {
+                fs::copy_file(path, export_folder/name,
+                    fs::copy_option::overwrite_if_exists);
+                ++ ret.files;
+            } else {
+                ++ ret.filtered;
+            }
         }
+        ++ ret.folders;
+        return ret;
     }
 
     void Project::add_filter(filter_t type, const Filter& filter)

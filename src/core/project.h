@@ -25,6 +25,13 @@ namespace core {
             int id;
         };
 
+        struct Result {
+            Result();
+            int files;
+            int folders;
+            int filtered;
+        };
+
         // May move a project
         Project(Project&& other) = default;
         Project& operator=(Project&& other) = default;
@@ -75,13 +82,11 @@ namespace core {
         /// Import files into export_folder.
         /// The optional argument import_folder specifies that only that folder
         /// should be imported.
-        /// Returns a pair containint the number of folders used and the number
-        /// of files imported.
-        std::pair<int, int> import(fs::path export_folder,
+        Result import(fs::path export_folder,
             boost::optional<fs::path> import_folder);
 
         /// Export all registered files into a given folder.
-        void export_to_folder(fs::path export_folder);
+        Result export_to_folder(fs::path export_folder);
 
         /// Add a filter to this project.
         void add_filter(filter_t type, const Filter& filter);
