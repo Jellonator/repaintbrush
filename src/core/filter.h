@@ -12,7 +12,7 @@ namespace core {
     class IFilter {
     public:
         /// Return false if path should be ignored.
-        virtual bool filter(const fs::path& path) const = 0;
+        virtual bool filter(const fs::path& base, const fs::path& path) const = 0;
         /// Serialize this filter into a string.
         virtual std::string serialize() const = 0;
         // All filters require a static deserialize function that return a unique
@@ -23,7 +23,7 @@ namespace core {
     class FilterMipMap : public IFilter {
     public:
         static std::unique_ptr<IFilter> deserialize(const std::string&);       
-        bool filter(const fs::path& path) const;
+        bool filter(const fs::path& base, const fs::path& path) const;
         std::string serialize() const;
     };
     
@@ -32,7 +32,19 @@ namespace core {
         std::string m_path;
     public:
         static std::unique_ptr<IFilter> deserialize(const std::string&);
-        bool filter(const fs::path& path) const;
+        bool filter(const fs::path& base, const fs::path& path) const;
+        std::string serialize() const;
+    };
+
+    /// Filter out images that are inside a given path. Note that this path
+    /// should be relative. In the case of input filters, this path is relative
+    /// to the input folder. In the case of output filters, this path is
+    /// relative to the project base path.
+    class FilterPath : public IFilter {
+        fs::path m_path;
+    public:
+        static std::unique_ptr<IFilter> deserialize(const std::string&);
+        bool filter(const fs::path& base, const fs::path& path) const;
         std::string serialize() const;
     };
 
@@ -52,8 +64,8 @@ namespace core {
         Filter(std::unique_ptr<IFilter> ptr, const std::string& name);
     public:
         /// Filter a path. Returns false if the path should be ignored.
-        bool filter(const fs::path& path) const;
-        bool operator()(const fs::path& path) const;
+        bool filter(const fs::path& base, const fs::path& path) const;
+        bool operator()(const fs::path& base, const fs::path& path) const;
 
         /// Get the name of this filter.
         const std::string& get_name() const;

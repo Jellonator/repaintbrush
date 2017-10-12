@@ -16,6 +16,14 @@ namespace core {
     boost::optional<fs::path> get_project_directory(
         const fs::path& current_directory);
 
+    fs::path resolve_path(const fs::path& p);
+
+    /// Determine if path B does not contain elements that are contained
+    /// in path A. If both A and B are canonical, this function checks if
+    /// path A is contained within path B.
+    /// Returns true if A is within B.
+    bool is_path_within_path(const fs::path& a, const fs::path& b);
+
     /// Represents a lock on a directory.
     /// Note that the constructor for this class must take a directory which
     /// must be locked, not the name of the lockfile itself.

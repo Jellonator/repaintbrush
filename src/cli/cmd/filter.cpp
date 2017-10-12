@@ -86,6 +86,7 @@ Options:
             }
         }
         project->add_filter(filter_type, filter);
+        std::cout << "Successfully added filter" << std::endl;
     }
 
     int get_int_width(int i)

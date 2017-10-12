@@ -6,6 +6,7 @@
 #include "cmd/init.h"
 #include "cmd/input.h"
 #include "cmd/filter.h"
+#include "cmd/export.h"
 
 namespace cli {
     // Base help is here instead of cmd/help.cpp since it does not correspond
@@ -40,7 +41,8 @@ Use `repaintbrush help <command> to get further information about a command.`)";
         {  "init", {  command_init_func,   command_init_string}},
         { "input", { command_input_func,  command_input_string}},
         {"import", {command_import_func, command_import_string}},
-        {"filter", {command_filter_func, command_filter_string}}
+        {"filter", {command_filter_func, command_filter_string}},
+        {"export", {command_export_func, command_export_string}}
     };
 
     void base(const std::vector<std::string>& args)

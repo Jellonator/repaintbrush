@@ -227,8 +227,8 @@ namespace core {
                     for (const fs::path& file : fileiter) {
                         bool should_continue = false;
                         for (const auto& filter : filters) {
-                            if (filter.filter(file)) {
-                                // Yeah, yeah, I know. I'm building the 
+                            if (filter.filter(folder, file)) {
+                                // Yeah, yeah, I know. I'm building the
                                 // pyramids of Egypt over here. But you know
                                 // what? I just don't care. If it works, and it
                                 // looks alright, it's alright.
@@ -263,13 +263,54 @@ namespace core {
                 fs::path name = selectstmt.column_value<std::string>(1);
                 fs::path path = selectstmt.column_value<std::string>(2);
                 fs::path outfile = export_folder/name;
-                fs::copy(path, outfile);
+                fs::copy_file(path, outfile);
                 insertfilestmt.reset();
                 insertfilestmt.bind(1, name.string());
                 insertfilestmt.finish();
             }
         }
         return std::make_pair(num_folders, num_files);
+    }
+
+    void Project::export_to_folder(fs::path export_folder)
+    {
+        auto& db = this->get_database();
+        auto transaction = db.create_transaction();
+
+        auto filters = this->get_filters();
+        filters.remove_if([](const auto& filter) {
+            return filter.type != FILTER_OUTPUT;
+        });
+
+        // Create a temporary table that is a list of files in the project
+        transaction.push(R"(
+            CREATE TEMP TABLE imglist(
+                name NTEXT NOT NULL,
+                path NTEXT NOT NULL)
+            )",
+            R"(DROP TABLE imglist)"
+        );
+        auto insertstmt = db.prepare(R"(
+            INSERT INTO imglist(name, path)
+            VALUES (?, ?)
+        )");
+        auto fileiter = fs::recursive_directory_iterator(this->get_path());
+        for (const fs::path& file : fileiter) {
+            insertstmt.reset();
+            insertstmt.bind(1, file.filename().string());
+            insertstmt.bind(2, file.string());
+            insertstmt.finish();
+        }
+        auto selectstmt = db.prepare(R"(
+            SELECT imglist.name, imglist.path FROM images
+            INNER JOIN imglist ON images.name = imglist.name
+        )");
+        while (selectstmt.step() == SQLITE_ROW) {
+            std::string name = selectstmt.column_value<std::string>(1);
+            fs::path path = selectstmt.column_value<std::string>(2);
+            fs::copy_file(path, export_folder/name,
+                fs::copy_option::overwrite_if_exists);
+        }
     }
 
     void Project::add_filter(filter_t type, const Filter& filter)

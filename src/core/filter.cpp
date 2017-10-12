@@ -27,7 +27,7 @@ namespace core {
         return std::make_unique<FilterMipMap>();
     }
 
-    bool FilterMipMap::filter(const fs::path& path) const
+    bool FilterMipMap::filter(const fs::path& base, const fs::path& path) const
     {
         return filter_mipmaps(path);
     }
@@ -45,7 +45,7 @@ namespace core {
         return ret;
     }
 
-    bool FilterType::filter(const fs::path& path) const
+    bool FilterType::filter(const fs::path& base, const fs::path& path) const
     {
         if (!path.has_extension() && this->m_path == "") {
             return true;
@@ -59,18 +59,36 @@ namespace core {
         return this->m_path;
     }
 
+    // Filter Path
+    std::unique_ptr<IFilter> FilterPath::deserialize(const std::string& arg)
+    {
+        auto ret = std::make_unique<FilterPath>();
+        ret->m_path = arg;
+        return ret;
+    }
+
+    bool FilterPath::filter(const fs::path& base, const fs::path& path) const
+    {
+        //TODO
+    }
+
+    std::string FilterPath::serialize() const
+    {
+        return this->m_path.string();
+    }
+
     // Filter
     Filter::Filter(std::unique_ptr<IFilter> ptr, const std::string& name)
     : m_filter(std::move(ptr)), m_name(name), m_valid_name(true) {}
 
-    bool Filter::filter(const fs::path& path) const
+    bool Filter::filter(const fs::path& base, const fs::path& path) const
     {
-        return this->m_filter->filter(path);
+        return this->m_filter->filter(base, path);
     }
 
-    bool Filter::operator()(const fs::path& path) const
+    bool Filter::operator()(const fs::path& base, const fs::path& path) const
     {
-        return this->filter(path);
+        return this->filter(base, path);
     }
 
     const std::string& Filter::get_name() const

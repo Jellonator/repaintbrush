@@ -80,6 +80,9 @@ namespace core {
         std::pair<int, int> import(fs::path export_folder,
             boost::optional<fs::path> import_folder);
 
+        /// Export all registered files into a given folder.
+        void export_to_folder(fs::path export_folder);
+
         /// Add a filter to this project.
         void add_filter(filter_t type, const Filter& filter);
 

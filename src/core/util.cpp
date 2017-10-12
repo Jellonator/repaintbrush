@@ -21,6 +21,34 @@ namespace core {
         return {};
     }
 
+    fs::path resolve_path(const fs::path& p)
+    {
+        if (p == "") {
+            return fs::current_path();
+        }
+        if (!p.is_absolute()) {
+            return fs::weakly_canonical(fs::absolute(p));
+        }
+        return fs::weakly_canonical(p);
+    }
+
+    bool is_path_within_path(const fs::path& a, const fs::path& b)
+    {
+        fs::path::const_iterator a_iter = a.begin();
+        fs::path::const_iterator b_iter = b.begin();
+        // look for elements that exist in B but not in A
+        while (b_iter != b.end() && a_iter != a.end()) {
+            if (*b_iter != *a_iter) {
+                return false;
+            }
+            ++a_iter;
+            ++b_iter;
+        }
+        // If B is not at the end, then B has
+        // extra elements that A does not have
+        return b_iter == b.end();
+    }
+
     ProjectFolderLock::ProjectFolderLock(const fs::path& path, bool force)
     : m_lockpath(path / rbrush_lock_name)
     {
@@ -40,7 +68,6 @@ namespace core {
 
     ProjectFolderLock::~ProjectFolderLock()
     {
-        // TODO
         if (this->m_valid) {
             try {
                 fs::remove(this->m_lockpath);
