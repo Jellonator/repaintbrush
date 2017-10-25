@@ -1,6 +1,5 @@
 #include "filter.h"
 #include "util.h"
-#include <glibmm.h>
 #include <boost/algorithm/string.hpp>
 #include <regex>
 

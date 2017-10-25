@@ -379,14 +379,10 @@ namespace core {
         return sqlite3_changes(db.get_ptr()) == 0;
     }
 
-    boost::optional<Project> get_project(bool force)
+    boost::optional<Project> open_project(const fs::path& path, bool force)
     {
-        auto path = core::get_project_directory(fs::current_path());
-        if (!path) {
-            std::cout << "Could not find repaintbrush project folder." << std::endl;
-            return {};
-        }
-        core::Project project = core::Project::connect(*path, force);
+        //TODO: Check that path is a valid project path
+        core::Project project = core::Project::connect(path, force);
         auto removedpaths = project.check();
         if (removedpaths.size() > 0) {
             std::cout << "Warning: the following files were removed since "
@@ -399,5 +395,15 @@ namespace core {
             std::cout << std::endl;
         }
         return project;
+    }
+
+    boost::optional<Project> get_project(bool force)
+    {
+        auto path = core::get_project_directory(fs::current_path());
+        if (!path) {
+            std::cout << "Could not find repaintbrush project folder." << std::endl;
+            return {};
+        }
+        return open_project(*path, force);
     }
 }

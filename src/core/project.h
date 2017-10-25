@@ -99,6 +99,8 @@ namespace core {
         bool remove_filter(int id);
     };
 
+    boost::optional<Project> open_project(const fs::path& path, bool force);
+
     /// Get the project.
     /// Searches the current directory and all parents of the current directory
     /// for a valid project, and return none if a project could not be found.

@@ -2,8 +2,9 @@ import os
 
 env = Environment()
 env.MergeFlags([
-    '!pkg-config gtkmm-3.0 glibmm-2.4 giomm-2.4 sqlite3 --cflags --libs',
-    '-Wall', '-Wextra', '-Wpedantic', '-lboost_system', '-lboost_filesystem'])
+    '!pkg-config sqlite3 --cflags --libs',
+    '!wx-config --cxxflags --libs',
+    '-fPIC', '-Wall', '-Wextra', '-Wpedantic', '-lboost_system', '-lboost_filesystem'])
 env.Append(CXXFLAGS='-std=c++14')
 env['ENV']['TERM'] = os.environ['TERM']
 
@@ -22,6 +23,8 @@ program_source = [
     "src/cli/cmd/input.cpp",
     "src/cli/cmd/filter.cpp",
     "src/cli/cmd/export.cpp",
-    # "src/gui/base.cpp",
+    "src/gui/base.cpp",
+    "src/gui/workspace.cpp",
+    #"src/gui/projectlist.cpp",
 ]
 program = env.Program(target='build/repaintbrush', source=program_source)
