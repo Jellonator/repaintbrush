@@ -80,6 +80,7 @@ namespace core {
         std::vector<fs::path> check();
 
         /// Import files into export_folder.
+        /// Be sure to check that export_folder is a relative path to the base path.
         /// The optional argument import_folder specifies that only that folder
         /// should be imported.
         Result import(fs::path export_folder,
@@ -106,4 +107,6 @@ namespace core {
     /// for a valid project, and return none if a project could not be found.
     /// This function will perform a sanity check after opening the project.
     boost::optional<Project> get_project(bool force);
+
+    const std::string& get_ftype_name(core::Project::filter_t type);
 }

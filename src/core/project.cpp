@@ -4,6 +4,54 @@
 #include <stdexcept>
 
 namespace core {
+    const std::string TYPE_INPUT = "input";
+    const std::string TYPE_OUTPUT = "output";
+    const std::string TYPE_NONE = "";
+    const std::string& get_ftype_name(core::Project::filter_t type)
+    {
+        switch (type) {
+        case core::Project::FILTER_INPUT:
+            return TYPE_INPUT;
+            break;
+        case core::Project::FILTER_OUTPUT:
+            return TYPE_OUTPUT;
+            break;
+        }
+        return TYPE_NONE;
+    }
+
+    void check_project_can_create(const fs::path& path) {
+        if (!fs::is_directory(path)) {
+            std::stringstream s;
+            s << "No such directory " << path;
+            throw std::runtime_error(s.str());
+        }
+        if (fs::is_directory(path/rbrush_folder_name) &&
+        fs::is_regular_file(path/rbrush_folder_name/rbrush_db_name)) {
+            std::stringstream s;
+            s << "The project directory " << path << " already exists";
+            throw std::runtime_error(s.str());
+        }
+    }
+
+    void check_project_is_valid(const fs::path& path) {
+        if (!fs::is_directory(path)) {
+            std::stringstream s;
+            s << "No such directory " << path;
+            throw std::runtime_error(s.str());
+        }
+        if (!fs::is_directory(path/rbrush_folder_name)) {
+            std::stringstream s;
+            s << "Directory " << path << " is not a valid project folder";
+            throw std::runtime_error(s.str());
+        }
+        if (!fs::is_regular_file(path/rbrush_folder_name/rbrush_db_name)) {
+            std::stringstream s;
+            s << "The project directory " << path << " may be corrupted";
+            throw std::runtime_error(s.str());
+        }
+    }
+
     Project::Project(const fs::path& path, bool force, int flags)
     : m_lock(path / rbrush_folder_name, force)
     , m_path(path)
@@ -13,11 +61,14 @@ namespace core {
 
     Project Project::connect(const fs::path& path, bool force)
     {
+        check_project_is_valid(path);
         return Project(path, force, SQLITE_OPEN_READWRITE);
     }
 
     Project Project::create(const fs::path& path, bool force)
     {
+        check_project_can_create(path);
+        fs::create_directories(path/rbrush_folder_name);
         Project project(path, force, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
         auto& db = project.get_database();
         db.execute(R"(
@@ -198,7 +249,11 @@ namespace core {
     {
         Result ret;
         // make sure export folder exists
-        export_folder = fs::current_path() / export_folder;
+        export_folder = core::resolve_path(export_folder);
+        if (!core::is_path_within_path(export_folder, get_path())) {
+            throw std::runtime_error("Selected export folder must be\n"
+                "within project folder.");
+        }
         fs::create_directories(export_folder);
         auto& db = this->get_database();
         {
@@ -381,7 +436,6 @@ namespace core {
 
     boost::optional<Project> open_project(const fs::path& path, bool force)
     {
-        //TODO: Check that path is a valid project path
         core::Project project = core::Project::connect(path, force);
         auto removedpaths = project.check();
         if (removedpaths.size() > 0) {

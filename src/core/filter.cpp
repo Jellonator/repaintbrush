@@ -3,8 +3,8 @@
 #include <boost/algorithm/string.hpp>
 #include <regex>
 
-#define FILTER(name, classname) \
-    {name, {classname::deserialize}}
+#define FILTER(name, classname, hasarg, description) \
+    {name, {classname::deserialize, hasarg, description}}
 
 // ends with _mip and one or more numbers
 const std::regex match_mipmap("^.*_mip[0-9]+$");
@@ -119,8 +119,9 @@ namespace core {
     // Filter Factory
     FilterFactory::FilterFactory()
     : m_filters({
-        FILTER("mipmap", FilterMipMap),
-        FILTER("filetype", FilterType)
+        FILTER("mipmap", FilterMipMap, false, "Remove MipMaps"),
+        FILTER("filetype", FilterType, true, "Remove files of this filetype"),
+        FILTER("path", FilterPath, true, "Remove files from this path")
     }) {}
 
     Filter FilterFactory::create(const std::string& name, const std::string& str) const
@@ -132,5 +133,10 @@ namespace core {
         }
         const auto& def = this->m_filters.at(name);
         return Filter(def.deserialize(str), name);
+    }
+
+    const std::map<std::string, FilterDef>& FilterFactory::get_filters() const
+    {
+        return this->m_filters;
     }
 }

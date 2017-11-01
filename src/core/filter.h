@@ -18,15 +18,15 @@ namespace core {
         // All filters require a static deserialize function that return a unique
         // pointer to itself.
     };
-    
+
     /// Filter out images whose name contains the word mipmap
     class FilterMipMap : public IFilter {
     public:
-        static std::unique_ptr<IFilter> deserialize(const std::string&);       
+        static std::unique_ptr<IFilter> deserialize(const std::string&);
         bool filter(const fs::path& base, const fs::path& path) const;
         std::string serialize() const;
     };
-    
+
     /// Filter out images of a given type
     class FilterType : public IFilter {
         std::string m_path;
@@ -52,6 +52,8 @@ namespace core {
     struct FilterDef {
         /// Function used for creating a filter from a string.
         std::function<std::unique_ptr<IFilter>(const std::string&)> deserialize;
+        bool has_arg;
+        std::string description;
     };
 
     /// A filter.
@@ -88,8 +90,10 @@ namespace core {
         FilterFactory();
 
         /// Create a new filter.
-        /// This function will throw an exception 
+        /// This function will throw an exception
         /// if a filter could not be created.
         Filter create(const std::string& name, const std::string& str) const;
+
+        const std::map<std::string, FilterDef>& get_filters() const;
     };
 }

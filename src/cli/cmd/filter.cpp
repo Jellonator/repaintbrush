@@ -17,7 +17,7 @@ a filter determines if a given file should be exported.
 
 Subcommands:
     list           List all filters used for this project.
-    add            Add a filter to this project. A filter can either be an 
+    add            Add a filter to this project. A filter can either be an
                    input filter or an output filter, which is determined by the
                    first argument.
     remove         Remove a filter by its ID.
@@ -25,7 +25,7 @@ Subcommands:
 Options:
     -f, --force    Force opening of a project.
     -n, --names    List filter types.)";
-    
+
     void command_filter_add(ArgChain& args);
     void command_filter_list(ArgChain& args);
     void command_filter_remove(ArgChain& args);
@@ -56,14 +56,14 @@ Options:
         bool force = block.has_option("force");
         auto project = core::get_project(force);
         if (!project) return;
-        
+
         core::Project::filter_t filter_type;
         if (block.match_arg(0, "input")) {
             filter_type = core::Project::FILTER_INPUT;
         } else if (block.match_arg(0, "output")) {
             filter_type = core::Project::FILTER_OUTPUT;
         } else {
-            std::cout << "Unknown filter type '" << block[0] 
+            std::cout << "Unknown filter type '" << block[0]
                       << "'" << std::endl;
             return;
         }
@@ -72,16 +72,16 @@ Options:
         if (block.size() >= 3) {
             filter_arg = block[2];
         }
-        
+
         core::FilterFactory factory;
         core::Filter filter = factory.create(filter_name, filter_arg);
         if (!filter) {
             if (!filter.is_name_valid()) {
-                std::cout << "Filter name '" << filter_name 
+                std::cout << "Filter name '" << filter_name
                           << "' is not valid." << std::endl;
             } else {
-                std::cout << "Invalid argument '" << filter_arg 
-                          << "' for filter type '" << filter_name << "'" 
+                std::cout << "Invalid argument '" << filter_arg
+                          << "' for filter type '" << filter_name << "'"
                           << std::endl;
             }
         }
@@ -97,22 +97,6 @@ Options:
             i /= 10;
         } while (i > 0);
         return ret;
-    }
-
-    const std::string TYPE_INPUT = "input";
-    const std::string TYPE_OUTPUT = "output";
-    const std::string TYPE_NONE = "";
-    const std::string& get_ftype_name(core::Project::filter_t type)
-    {
-        switch (type) {
-        case core::Project::FILTER_INPUT:
-            return TYPE_INPUT;
-            break;
-        case core::Project::FILTER_OUTPUT:
-            return TYPE_OUTPUT;
-            break;
-        }
-        return TYPE_NONE;
     }
 
     const std::string LIST_TYPES =
