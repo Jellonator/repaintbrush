@@ -27,8 +27,9 @@ Commands:
     init               Create a new rbrush project
     help               Give help for a command
     input              Add or remove input directories
-    import             Import files from input directories
     filter             Manage file filters
+    import             Import files from input directories
+    export             Export imported files into a given directory
 
 Use `repaintbrush help <command> to get further information about a command.`)";
     void base_help()
