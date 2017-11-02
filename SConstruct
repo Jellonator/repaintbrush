@@ -25,6 +25,5 @@ program_source = [
     "src/cli/cmd/export.cpp",
     "src/gui/base.cpp",
     "src/gui/workspace.cpp",
-    #"src/gui/projectlist.cpp",
 ]
 program = env.Program(target='build/repaintbrush', source=program_source)
